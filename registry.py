@@ -41,6 +41,8 @@ class ClientThread(threading.Thread):
                 #second is user name, thirst is password
                 message=self.tcpClientSocket.recv(1024).decode().split( )
                 logging.info("Received from " + self.ip+ " : " + str(self.port) +" -> " +" ".join(message))
+                if len(message)==0:
+                    break
                 #Register Message
                 if message[0] =='JOIN':
                     #If the username is exist
@@ -93,6 +95,7 @@ class ClientThread(threading.Thread):
                             logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                             self.tcpClientSocket.send(response.encode())
 
+                #param :type. username of logout account
                 elif message[0]=='LOGOUT':
                     #user is online =>removes from online_peers list
 
@@ -105,6 +108,7 @@ class ClientThread(threading.Thread):
                         finally:
                             self.lock.release()
                         print(self.ip + ":" + str(self.port) + " is logged out")
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " ->  is logout")
                         self.tcpClientSocket.close()
                         self.ServerThread.timer.cancel()
                         break
@@ -113,31 +117,78 @@ class ClientThread(threading.Thread):
                         self.tcpClientSocket.close()
                         break
 
-                #check if an arbitary user is online or not
+               #find online friend
                 elif message[0]=='CHECKONL':
-                    if db.is_account_exists(message[1]):
-                        if db.is_account_online(message[1]):
-                            peer_info=db.get_peer_ip_port(message[1])
-                            response = "search successfull " + peer_info[0] + ":" + peer_info[1]
-                            logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
-                            self.tcpClientSocket.send(response.encode())
-
+                    if db.is_account_exists(message[1]) and db.is_account_online(message[1]):
+                        ListOnlineFriends=db.get_online_friends(message[1])
+                        if len(ListOnlineFriends)==0:
+                            response='No firend of you are online now'
                         else:
-                            response='user does not online'
-                            logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
-                            self.tcpClientSocket.send(response.encode())
-
-                    else:
-                        response = "search-user-not-found"
+                            response = "list of online friends are "
+                            for i in ListOnlineFriends:
+                                response+=i+" "
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
+
+
+                #param: type,username(peer want to add),username(of peer being added)
+                elif message[0]=='ADDFRIEND':
+                    if len(message)>1 and message[1] and message[2] and db.is_account_exists(message[2]) and db.is_account_online(message[1]):
+                        response=db.insert_friend_request(message[2],message[1])
+                        if response=='AlreadyFriend':
+                            response='You and '+ message[1]+ " are already friend"
+                        elif response=='AlreadyAskFriendRequest':
+                            response='You have sent a request for ' +message[2]
+                        else:
+                            response = "your request is successfully sending to " + message[2]
+                            logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+                    else :
+                        response = 'user does not exist'
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+                # param: type,username (peer THAT ACCEPT),username(peer being ACCEPTED)
+                elif message[0]=='ACCEPTFRIEND':
+                    if len(message) > 1 and message[1] and message[2] and db.is_account_exists(message[2]) and db.is_account_online(message[1]):
+                        if db.accept_friend_request(message[1],message[2])=='NotInRequest':
+                            response=message[1]+ "not in your request list"
+
+                        else:
+                            db.make_friend(message[1],message[2])
+                            response = "accept successfull you and " + message[2] +" are friend"
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+                    else:
+                        response = 'user does not exist'
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+
+                elif message[0]=='VIEWREQUESTFRIEND':
+                    if len(message)>1 and db.is_account_online(message[1]):
+                        ListReFriend= db.get_request_friend(message[1])
+                        if len(ListReFriend)==0:
+                            response="You have no request"
+                        else:
+                            response = "list of request friends are "
+                            for i in ListReFriend:
+                                response += i + " "
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+                    else :
+                        response='NotLoginYet'
+                        self.tcpClientSocket.send(response.encode())
+
+
+
+
 
             except OSError as oErr:
                 logging.error("OSError: {0}".format(oErr))
 
+    def resetTimeout(self):
+        self.ServerThread.resetTimer()
 
-
-#UDPServer thread for clients(each thread serve just
+#Server thread for clients(each thread serve just
 #one client)
 class ServerThread(threading.Thread):
     def __init__(self, username, clientSocket):
@@ -158,9 +209,11 @@ class ServerThread(threading.Thread):
                 del tcpThreads[self.username]
 
             self.tcpClientSoccket.close()
+            self.timer.cancel()
+            logging.info("Removed " + self.username + " from online peers")
             print("Removed " + self.username + " from online peers")
 
-    # resets timer for udp server
+    # resets timer for serverThread
     def resetTimer(self):
         self.timer.cancel()
         self.timer = threading.Timer(5, self.waitHelloMessage)
@@ -168,28 +221,43 @@ class ServerThread(threading.Thread):
 
 
 
-
-
-
-
-
 print("Registry started...")
 port=15600
+checkOnlServerport=15500
 db=db.DB()
+for online_user in db.db.online_peers.find():
+    db.user_logout(online_user["username"])
 tcpThreads = {}
 hostname=gethostname()
 host = gethostbyname(hostname)
 print("Host ip: "+str(host)+ " port "+str(port))
 logging.basicConfig(filename="registry.log", level=logging.INFO)
-s=socket(AF_INET,SOCK_STREAM)
-s.bind((hostname,port))
-s.listen(5)
-clientsocket,addres=s.accept()
-ClientHandleThread=ClientThread(addres[0],addres[1],clientsocket)
-ClientHandleThread.start()
+Mainserver=socket(AF_INET,SOCK_STREAM)
+checkOnlServer=socket(AF_INET,SOCK_DGRAM)
+Mainserver.bind((hostname,port))
+checkOnlServer.bind((hostname,checkOnlServerport))
+Mainserver.listen(5)
+
+sock_list=[Mainserver,checkOnlServer]
+while sock_list:
+    print("Listening for incoming connections...")
+    read_sock,_,__=select.select(sock_list,[],sock_list)
+    for notifed_socket in read_sock:
+        if notifed_socket==Mainserver:
+            client_socket,addr=Mainserver.accept()
+            HandleThread = ClientThread(addr[0], addr[1], client_socket)
+            HandleThread.start()
+        elif notifed_socket==checkOnlServer:
+            message, clientAddress = notifed_socket.recvfrom(1024)
+            message = message.decode().split()
+            if message[0] == "HELLO":
+                if message[1] in tcpThreads:
+                    tcpThreads[message[1]].resetTimeout()
+                    print("Hello is received from " + message[1])
+                    logging.info("Received from " + clientAddress[0] + ":" + str(clientAddress[1]) + " -> " + " ".join(message))
 
 
-
+Mainserver.close()
 
 
 

@@ -1,3 +1,17 @@
 
-INFO:root:Received from 169.254.67.175 : 9771 -> JOIN LAM 123455
-INFO:root:Received from 169.254.67.175 : 9881 -> JOIN LAM 123455
+INFO:root:Received from 169.254.67.175 : 6550 -> LOGIN 13 13
+INFO:root:Send to 169.254.67.175:6550 -> succesfully login
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175 : 6550 -> ACCEPTFRIEND 13 10
+INFO:root:Send to 169.254.67.175:6550 -> accept successfull you and10 are friend
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
+INFO:root:Received from 169.254.67.175:62067 -> HELLO 13
