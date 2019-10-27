@@ -5,9 +5,6 @@ import logging
 import db
 
 
-#Thread create to handle only the peer messages sent to registry
-#When a peer firsts connected to registry server( registry server is
-#a server handle all "the server" thing), a new client thread is created
 class ClientThread(threading.Thread):
     def __init__(self,ip,port,tcpClientSocket):
         threading.Thread.__init__(self)
@@ -81,7 +78,7 @@ class ClientThread(threading.Thread):
                             finally:
                                 self.lock.release()
 
-                            db.user_login(message[1],self.ip,self.port)
+                            db.user_login(message[1],self.ip,str(message[3]))
                             #login succes, so create server thread for this peer,
                             # also set timer for this thread
                             response='succesfully login'
@@ -180,10 +177,32 @@ class ClientThread(threading.Thread):
 
 
 
+                elif message[0] == "SEARCH":
+                    # checks if an account with the username exists
+                    if db.is_account_exists(message[1]):
+                        # checks if the account is online
+                        # and sends the related response to peer
+                        if db.is_account_online(message[1]):
+                            peer_info = db.get_peer_ip_port(message[1])
+                            response = "search-success " + peer_info[0] + ":" + peer_info[1]
+                            logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                            self.tcpClientSocket.send(response.encode())
+                        else:
+                            response = "search-user-not-online"
+                            logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                            self.tcpClientSocket.send(response.encode())
+                    # enters if username does not exist
+                    else:
+                        response = "search-user-not-found"
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+
+
 
 
             except OSError as oErr:
-                logging.error("OSError: {0}".format(oErr))
+                pass
+                # logging.error("OSError: {0}".format(oErr))
 
     def resetTimeout(self):
         self.ServerThread.resetTimer()
