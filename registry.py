@@ -37,6 +37,7 @@ class ClientThread(threading.Thread):
                 #message form: list with 3 element, first is request type,
                 #second is user name, thirst is password
                 message=self.tcpClientSocket.recv(1024).decode().split( )
+
                 logging.info("Received from " + self.ip+ " : " + str(self.port) +" -> " +" ".join(message))
                 if len(message)==0:
                     break
@@ -148,7 +149,7 @@ class ClientThread(threading.Thread):
                 elif message[0]=='ACCEPTFRIEND':
                     if len(message) > 1 and message[1] and message[2] and db.is_account_exists(message[2]) and db.is_account_online(message[1]):
                         if db.accept_friend_request(message[1],message[2])=='NotInRequest':
-                            response=message[1]+ "not in your request list"
+                            response=message[2]+ "not in your request list"
 
                         else:
                             db.make_friend(message[1],message[2])
@@ -249,12 +250,13 @@ for online_user in db.db.online_peers.find():
 tcpThreads = {}
 hostname=gethostname()
 host = gethostbyname(hostname)
+#host= gethostbyname( '0.0.0.0' )
 print("Host ip: "+str(host)+ " port "+str(port))
 logging.basicConfig(filename="registry.log", level=logging.INFO)
 Mainserver=socket(AF_INET,SOCK_STREAM)
 checkOnlServer=socket(AF_INET,SOCK_DGRAM)
-Mainserver.bind((hostname,port))
-checkOnlServer.bind((hostname,checkOnlServerport))
+Mainserver.bind(('',port))
+checkOnlServer.bind(('',checkOnlServerport))
 Mainserver.listen(5)
 
 sock_list=[Mainserver,checkOnlServer]
@@ -273,7 +275,7 @@ while sock_list:
                 if message[1] in tcpThreads:
                     tcpThreads[message[1]].resetTimeout()
                     print("Hello is received from " + message[1])
-                    logging.info("Received from " + clientAddress[0] + ":" + str(clientAddress[1]) + " -> " + " ".join(message))
+                    #logging.info("Received from " + clientAddress[0] + ":" + str(clientAddress[1]) + " -> " + " ".join(message))
 
 
 Mainserver.close()

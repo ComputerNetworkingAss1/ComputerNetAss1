@@ -6,6 +6,17 @@ import threading
 import time
 import atexit
 
+
+def get_download_path():
+    if os.name == 'nt':
+        import winreg
+        sub_key = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders'
+        downloads_guid = '{374DE290-123F-4565-9164-39C4925E467B}'
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key) as key:
+            location = winreg.QueryValueEx(key, downloads_guid)[0]
+        return location
+    else:
+        return os.path.join(os.path.expanduser('~'), 'downloads')
 from math import ceil
 from BasedPeer import Peer
 from config import *
@@ -62,8 +73,7 @@ class Client(Peer):
         if self.file_data.get(key) is None:
             self.file_data[key] = [None] * filenum
         self.file_data[key][curnum] = filedata
-        print(self.file_data[key])
-        print(self.file_data.get(key) is None)
+        #print(self.file_data.get(key) is None)
 
         flag = True
         for i in self.file_data[key]:
@@ -71,7 +81,21 @@ class Client(Peer):
                 flag = False
                 break
         if flag is True:
-            with open(key, 'at', encoding='utf-8') as f:
+            print(self.file_data[key])
+            file_name=filename.split('\\')[-1]
+            file_name_sub_head=file_name.split('.')[0]
+            file_name_sub_tail=file_name.split('.')[1]
+            download_path = get_download_path()
+            path=download_path+'\\'+file_name
+            check_path=path
+            i=1
+            while os.path.exists(check_path):
+                repalce=file_name_sub_head+str(i)+'.'+file_name_sub_tail
+                check_path=download_path+'\\'+repalce
+                i+=1
+            path=check_path
+            print(path)
+            with open(path, 'w', encoding='utf-8') as f:
                 for i in self.file_data[key]:
                     f.write(i)
 

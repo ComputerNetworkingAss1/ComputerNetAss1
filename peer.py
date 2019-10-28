@@ -188,7 +188,7 @@ class peerMain():
 
     def sendHelloMessage(self):
         message = "HELLO " + self.loginCredentials[0]
-        logging.info("Send to " + self.registryName + ":" + str(self.checkOnlPort) + " -> " + message)
+        #logging.info("Send to " + self.registryName + ":" + str(self.checkOnlPort) + " -> " + message)
         self.checkOnlClientSocket.sendto(message.encode(), (self.registryName, self.checkOnlPort))
         self.timer = threading.Timer(1, self.sendHelloMessage)
         self.timer.start()

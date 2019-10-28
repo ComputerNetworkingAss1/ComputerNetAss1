@@ -9,7 +9,7 @@ class Peer(object):
     def __init__(self, serverhost='localhost', serverport=13999, listen_num=100):
         self.serverhost, self.serverport = serverhost, int(serverport)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((serverhost, int(serverport)))
+        self.socket.bind(('', int(serverport)))
         self.socket.listen(listen_num)
         self.peerlist = {}
         self.handlers = {}
@@ -40,6 +40,7 @@ class Peer(object):
         # import pdb; pdb.set_trace()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
+            #print(address)
             s.connect(address)
         except ConnectionRefusedError:
             print('ConnectionRefusedError')
