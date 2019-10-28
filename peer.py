@@ -18,9 +18,6 @@ class peerMain():
         self.loginCredentials = (None, None)
         self.isOnline = False
         self.timer = None
-        self.peerServerPort = None
-        self.peerServer = None
-        self.peerClient = None
         self.peer=None
 
         choice = "0"
@@ -56,10 +53,6 @@ class peerMain():
                 self.logout(1)
                 self.isOnline = False
                 self.loginCredentials = (None, None)
-                self.peerServer.isOnline = False
-                self.peerServer.tcpServerSocket.close()
-                if self.peerClient is not None:
-                    self.peerClient.tcpClientSocket.close()
                 print("Logged out successfully")
             elif choice is "3":
                 self.logout(2)
