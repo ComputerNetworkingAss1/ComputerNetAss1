@@ -251,7 +251,7 @@ tcpThreads = {}
 hostname=gethostname()
 host = gethostbyname(hostname)
 #host= gethostbyname( '0.0.0.0' )
-print("Host ip: "+str(host)+ " port "+str(port))
+#print("Host ip: "+str(host)+ " port "+str(port))
 logging.basicConfig(filename="registry.log", level=logging.INFO)
 Mainserver=socket(AF_INET,SOCK_STREAM)
 checkOnlServer=socket(AF_INET,SOCK_DGRAM)

@@ -4,6 +4,11 @@ import select
 import logging
 from p2p import Client
 
+
+def get_peer_ip():
+    s = socket(AF_INET,SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
 class peerMain():
 
     # peer initializations
@@ -41,8 +46,8 @@ class peerMain():
                     self.isOnline = True
                     self.loginCredentials = (username, password)
                     self.peerServerPort = peerServerPort
-                    hostname = gethostname()
-                    host = gethostbyname(hostname)
+                    hostname = getfqdn()
+                    host = str(get_peer_ip())
                     self.peer = Client((self.registryName, self.registryPort), serverport=self.peerServerPort,peername=self.loginCredentials[0],serverhost=host)
 
                     self.sendHelloMessage()

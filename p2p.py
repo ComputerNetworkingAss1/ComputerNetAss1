@@ -17,9 +17,12 @@ def get_download_path():
         return location
     else:
         return os.path.join(os.path.expanduser('~'), 'downloads')
+
+
 from math import ceil
 from BasedPeer import Peer
 from config import *
+
 class Client(Peer):
     def __init__(self,server_info, peername=None, serverhost='localhost', serverport=40000):
         super(Client, self).__init__(serverhost, serverport)
