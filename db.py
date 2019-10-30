@@ -94,11 +94,6 @@ class DB:
         self.db.accounts.update(query2, newvalue_of_friends2)
         return "OK"
 
-
-
-
-
-
     def get_online_friends(self,username):
         ListFriend=self.db.accounts.find_one({"username":username})["friends"]
         OnlineFriends=[]
@@ -112,6 +107,14 @@ class DB:
 
     def get_request_friend(self,username):
         return self.db.accounts.find_one({"username":username})["addfrienRequest"]
+
+    def Is_Friend(self,username1,usename2):
+        ListFriendOf1 = self.db.accounts.find_one({"username": username1})["friends"]
+        if usename2 in ListFriendOf1:
+            return True
+        return False
+
+
 
 
 

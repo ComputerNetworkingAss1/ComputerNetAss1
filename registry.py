@@ -198,6 +198,27 @@ class ClientThread(threading.Thread):
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
 
+                elif message[0] =='CHECKFRIEND':
+                    if db.is_account_exists(message[1]) and db.is_account_exists(message[2]):
+                        if db.is_account_online(message[1]) and db.is_account_online(message[2]):
+                            if db.Is_Friend(message[1],message[2]):
+                                response='YES'
+                            else:
+                                response='NO'
+                            self.tcpClientSocket.send(response.encode())
+                        else:
+                            response='NOTONL'
+                            self.tcpClientSocket.send(response.encode())
+                    else:
+                        response='NOTEX'
+                        self.tcpClientSocket.send(response.encode())
+
+
+
+
+
+
+
 
 
 
@@ -206,7 +227,8 @@ class ClientThread(threading.Thread):
                 # logging.error("OSError: {0}".format(oErr))
 
     def resetTimeout(self):
-        self.ServerThread.resetTimer()
+        if self.ServerThread is not None:
+            self.ServerThread.resetTimer()
 
 #Server thread for clients(each thread serve just
 #one client)

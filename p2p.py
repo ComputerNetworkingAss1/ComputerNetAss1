@@ -142,8 +142,14 @@ class Client(Peer):
         """ Processing received chat request message from peer. """
         peername = msgdata['peername']
         host, port = msgdata['host'], msgdata['port']
-        print('request: {} --- {}:{}'.format(peername, host, port))
-        print('Please enter "yes" or "no":')
+        flag=False
+        if self.checkFriend(self.name,peername) is True:
+            flag=True
+            print('Your friend '+peername +' want to chat')
+            self.agree=True
+        else:
+            print('request from : {} --- {}:{}'.format(peername, host, port))
+            print('Please enter "yes" or "no":')
         while self.agree is None:
             time.sleep(0.1)
         if self.agree is True:
@@ -153,7 +159,10 @@ class Client(Peer):
                 'host': self.serverhost,
                 'port': self.serverport
             }
-            print('You accept a request, chat start')
+            if not flag:
+                print('You accept a request, chat start')
+            else:
+                print('Chat start')
             self.socket_send((host, port), msgtype=CHAT_ACCEPT, msgdata=data)
             self.peerlist[peername] = (host, port)
         elif self.agree is False:
@@ -162,6 +171,16 @@ class Client(Peer):
             self.socket_send((host, port), msgtype=CHAT_REFUSE, msgdata={})
 
 
+    def checkFriend(self,username1,username2):
+        message='CHECKFRIEND '+username1+' '+username2
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((self.server_info[0], self.server_info[1]))
+        s.send(message.encode())
+        response = s.recv(1024).decode()
+        if response=='YES':
+            return True
+        else :
+            return False
 
     def searchUser(self, username):
         message = "SEARCH " + username
@@ -175,6 +194,7 @@ class Client(Peer):
             return 0
         elif response[0] == "search-user-not-found":
             return None
+
 
     def GetPeerInFo(self,username):
         searchStatus=self.searchUser(username)
